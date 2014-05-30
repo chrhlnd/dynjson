@@ -101,13 +101,12 @@ func (n *dynnode)Resolve(path string)(DynNode,error) {
 	}
 
 	tok := path[0]
-	start := 1
 
 	for i := 1; i < len(path); i++ {
 		if path[i] == tok {
 			var child *dynnode
 			var err error
-			if child, err = makeNode(path[start:i]); err != nil {
+			if child, err = makeNode(path[1:i]); err != nil {
 				return child, err
 			}
 
