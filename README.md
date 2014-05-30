@@ -51,3 +51,19 @@ node.Resolve("/json/array/500")
 
 ```
 
+Stats off my meger vm
+
+```
+go test --bench=".*"
+PASS
+BenchmarkResolveChildStr         1000000              1385 ns/op
+BenchmarkResolveChildU64         1000000              1298 ns/op
+BenchmarkResolveChildBool        1000000              1261 ns/op
+BenchmarkResolve2ChildF64         200000              9952 ns/op
+BenchmarkResolve2ChildString      200000              9743 ns/op
+BenchmarkResolve3ChildArrayStr    500000              4375 ns/op
+BenchmarkResolve2ChildCached     2000000               899 ns/op
+BenchmarkResolve4ChildStr         100000             16996 ns/op
+BenchmarkResolve4ChildCachedStr  2000000               926 ns/op
+ok      github.com/chrhlnd/dynjson      17.753s
+```
