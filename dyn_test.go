@@ -22,13 +22,13 @@ var customer = `
 	}
 }
 `
-func BenchmarkResolveChildStr(b * testing.B) {
+func BenchmarkNodeChildStr(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if node, err := root.Resolve("/name"); err != nil {
+		if node, err := root.Node("/name"); err != nil {
 			b.Fatal("Failed")
 		} else {
 			if val, err := node.Str(); err != nil || val != "fred" {
@@ -38,13 +38,13 @@ func BenchmarkResolveChildStr(b * testing.B) {
 	}
 }
 
-func BenchmarkResolveChildU64(b * testing.B) {
+func BenchmarkNodeChildU64(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if node, err := root.Resolve("/age"); err != nil {
+		if node, err := root.Node("/age"); err != nil {
 			b.Fatal("Failed")
 		} else {
 			if val, err := node.U64(); err != nil || val != 33 {
@@ -54,13 +54,13 @@ func BenchmarkResolveChildU64(b * testing.B) {
 	}
 }
 
-func BenchmarkResolveChildBool(b * testing.B) {
+func BenchmarkNodeChildBool(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if node, err := root.Resolve("/fun"); err != nil {
+		if node, err := root.Node("/fun"); err != nil {
 			b.Fatal("Failed")
 		} else {
 			if val, err := node.Bool(); err != nil || val != false {
@@ -70,13 +70,13 @@ func BenchmarkResolveChildBool(b * testing.B) {
 	}
 }
 
-func BenchmarkResolve2ChildF64(b * testing.B) {
+func BenchmarkNode2ChildF64(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if node, err := root.Resolve("/sister/rating"); err != nil {
+		if node, err := root.Node("/sister/rating"); err != nil {
 			b.Fatal("Failed")
 		} else {
 			if val, err := node.F64(); err != nil || val != 10.34 {
@@ -86,13 +86,13 @@ func BenchmarkResolve2ChildF64(b * testing.B) {
 	}
 }
 
-func BenchmarkResolve2ChildString(b * testing.B) {
+func BenchmarkNode2ChildString(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if node, err := root.Resolve("/sister/name"); err != nil {
+		if node, err := root.Node("/sister/name"); err != nil {
 			b.Fatal("Failed")
 		} else {
 			if val, err := node.Str(); err != nil || val != "joey" {
@@ -102,13 +102,13 @@ func BenchmarkResolve2ChildString(b * testing.B) {
 	}
 }
 
-func BenchmarkResolve3ChildArrayStr(b * testing.B) {
+func BenchmarkNode3ChildArrayStr(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if node, err := root.Resolve("/friends/2"); err != nil {
+		if node, err := root.Node("/friends/2"); err != nil {
 			b.Fatal("Failed")
 		} else {
 			if val, err := node.Str(); err != nil || val != "bob" {
@@ -118,14 +118,14 @@ func BenchmarkResolve3ChildArrayStr(b * testing.B) {
 	}
 }
 
-func BenchmarkResolve2ChildCached(b * testing.B) {
+func BenchmarkNode2ChildCached(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	var node DynNode
 	var err error
-	if node, err = root.Resolve("/friends/0"); err != nil {
+	if node, err = root.Node("/friends/0"); err != nil {
 		b.Fatal("Failed")
 	}
 	for i := 0; i < b.N; i++ {
@@ -135,13 +135,13 @@ func BenchmarkResolve2ChildCached(b * testing.B) {
 	}
 }
 
-func BenchmarkResolve4ChildStr(b * testing.B) {
+func BenchmarkNode4ChildStr(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		if node, err := root.Resolve("/sister/friends/2/name"); err != nil {
+		if node, err := root.Node("/sister/friends/2/name"); err != nil {
 			b.Fatal("Failed")
 		} else {
 			if val, err := node.Str(); err != nil || val != "mum" {
@@ -151,7 +151,7 @@ func BenchmarkResolve4ChildStr(b * testing.B) {
 	}
 }
 
-func BenchmarkResolve4ChildCachedStr(b * testing.B) {
+func BenchmarkNode4ChildCachedStr(b * testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -159,7 +159,7 @@ func BenchmarkResolve4ChildCachedStr(b * testing.B) {
 	var node DynNode
 	var err error
 
-	if node, err = root.Resolve("/sister/friends/2/name"); err != nil {
+	if node, err = root.Node("/sister/friends/2/name"); err != nil {
 		b.Fatal("Failed")
 	}
 
@@ -170,7 +170,99 @@ func BenchmarkResolve4ChildCachedStr(b * testing.B) {
 	}
 }
 
-func TestResolve(t *testing.T) {
+func BenchmarkMutate1stChild(b *testing.B) {
+	root := NewFromBytes([]byte(customer))
+	for i := 0; i < b.N; i++ {
+		n := root.AsNode("/name");
+		n.SetVal(68.33)
+	}
+}
+
+func BenchmarkMutate2rdChild(b *testing.B) {
+	root := NewFromBytes([]byte(customer))
+	for i := 0; i < b.N; i++ {
+		n := root.AsNode("/sister/name");
+		n.SetVal(300)
+	}
+}
+
+func BenchmarkMutate3rdChild(b *testing.B) {
+	root := NewFromBytes([]byte(customer))
+
+
+	for i := 0; i < b.N; i++ {
+		n := root.AsNode("/sister/friends/0");
+		n.SetVal(true)
+	}
+}
+
+func TestMutate(t *testing.T) {
+	root := NewFromBytes([]byte(customer))
+
+	var node DynNode
+	var node1 DynNode
+	var err error
+
+	errIf := func (err error) {
+		if err != nil {
+			t.Error(err)
+			panic("blah")
+		}
+	}
+
+	node, err = root.Node("/name");
+	errIf(err);
+
+	node.SetVal("Sup")
+
+
+	node1, err = root.Node("/name");
+	errIf(err);
+
+	if node1.AsStr() != node.AsStr() {
+		t.Errorf("Mutation failed expected %v, got %v\n", node.AsStr(), node1.AsStr())
+		return
+	}
+
+	node, err = root.Node("/friends/0")
+	errIf(err)
+
+	node.SetVal("MONKEYMAN")
+
+	t.Logf("Data was %v\n", string(root.Data()))
+
+	node1, err = root.Node("/friends/0")
+	errIf(err)
+
+	if node1.AsStr() != node.AsStr() {
+		t.Errorf("Mutation failed expec %v got %v\n", node.AsStr(), node1.AsStr())
+		return
+	}
+
+	node, err = root.Node("/sister/friends/1")
+	errIf(err)
+
+	node.SetVal("SUPERMONKEYMAN")
+
+	if root.AsNode("/sister/friends/1").AsStr() != "SUPERMONKEYMAN" {
+		t.Error("Mutate failed")
+		return
+	}
+
+	root.AsNode("/sister/name").SetVal(33.65)
+	t.Logf("Data was %v\n", string(root.Data()))
+
+	if root.AsNode("/sister/name").AsF64() != 33.65 {
+		t.Error("F64 fail")
+		return
+	}
+
+
+	t.Logf("Data was %v\n", string(root.Data()))
+
+}
+
+func TestNode(t *testing.T) {
 	b := []byte(customer)
 
 	root := NewFromBytes(b)
@@ -178,7 +270,7 @@ func TestResolve(t *testing.T) {
 	var err error
 	var node DynNode
 
-	if node, err = root.Resolve("/name"); err == nil && !node.IsNull() {
+	if node, err = root.Node("/name"); err == nil && !node.IsNull() {
 		if str, err := node.Str(); str != "fred" {
 			t.Errorf("Expected 'fred' for /name got [%v] err", str, err)
 		} else {
@@ -186,10 +278,10 @@ func TestResolve(t *testing.T) {
 		}
 
 	} else {
-		t.Errorf("Resolve failed to find /name expected DynNode value = 'fred' err was %v",err);
+		t.Errorf("Node failed to find /name expected DynNode value = 'fred' err was %v",err);
 	}
 
-	if node, err = root.Resolve("/friends"); err == nil && !node.IsNull() {
+	if node, err = root.Node("/friends"); err == nil && !node.IsNull() {
 		if ary, err := node.Ary(); err != nil {
 			t.Errorf("Expected Array of friends got error %v", err)
 		} else {
@@ -200,10 +292,10 @@ func TestResolve(t *testing.T) {
 		}
 
 	} else {
-		t.Errorf("Resolve failed to find /friends expected DynNode value = [ '', '', '' ] err was %v",err);
+		t.Errorf("Node failed to find /friends expected DynNode value = [ '', '', '' ] err was %v",err);
 	}
 
-	if node, err = root.Resolve("/friends/1"); err == nil && !node.IsNull() {
+	if node, err = root.Node("/friends/1"); err == nil && !node.IsNull() {
 		if str, err := node.Str(); err != nil || str != "douge" {
 			t.Errorf("Expected Middle friend of 'douge' got error %v", err)
 		} else {
@@ -211,10 +303,10 @@ func TestResolve(t *testing.T) {
 		}
 
 	} else {
-		t.Errorf("Resolve failed to find /friends/1 expected DynNode value = 'douge' err was %v",err);
+		t.Errorf("Node failed to find /friends/1 expected DynNode value = 'douge' err was %v",err);
 	}
 
-	if node, err = root.Resolve("/sister/rating"); err == nil && !node.IsNull() {
+	if node, err = root.Node("/sister/rating"); err == nil && !node.IsNull() {
 		if f64, err := node.F64(); err != nil || f64 != 10.34 {
 			t.Errorf("Expected float got error %v",err)
 		} else {
@@ -224,7 +316,7 @@ func TestResolve(t *testing.T) {
 		t.Errorf("Failed err %v", err)
 	}
 
-	if node, err = root.Resolve("/sister/fun"); err == nil && !node.IsNull() {
+	if node, err = root.Node("/sister/fun"); err == nil && !node.IsNull() {
 		if fun, err := node.Bool(); err != nil || !fun {
 			t.Errorf("Expected true got %v error %v",fun,err)
 		}
@@ -252,7 +344,7 @@ func TestResolve(t *testing.T) {
 	root = New()
 	root.SetVal(d)
 
-	if node, err = root.Resolve("/Friends/0/Rank"); err != nil {
+	if node, err = root.Node("/Friends/0/Rank"); err != nil {
 		t.Fatal(err)
 	}
 

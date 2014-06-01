@@ -3,7 +3,8 @@ package dynjson
 import "encoding/json"
 
 type DynNode interface {
-	Path()(string)
+	LocalPath()(string)
+	FullPath(sep rune)(string)
 	Parent()(DynNode)
 	Root()(DynNode)
 
@@ -12,7 +13,8 @@ type DynNode interface {
 	//         #0#customer#name
 	//         /books/0/name
 	//         
-	Resolve( path string )(DynNode,error)
+	Node(path string)(DynNode,error)
+	AsNode(path string)(DynNode)
 
 	IsNull()(bool)
 
@@ -23,6 +25,12 @@ type DynNode interface {
 	Bool()(bool,error)
 	Obj()(map[string]json.RawMessage,error)
 	Ary()([]json.RawMessage,error)
+
+	AsU64()(uint64) // panic
+	AsI64()(int64) // panic
+	AsF64()(float64) // panic
+	AsStr()(string) // panic
+	AsBool()(bool) // panic
 
 	SetVal(v interface{})(error)
 	Data()([]byte)

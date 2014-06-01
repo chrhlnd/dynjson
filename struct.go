@@ -3,6 +3,8 @@ package dynjson
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
+	"bytes"
 )
 
 func New()(DynNode) {
@@ -14,6 +16,7 @@ func NewFromBytes(bytes []byte)(DynNode) {
 }
 
 type dynnode struct {
+	version int
 	parent *dynnode
 	path string
 	data json.RawMessage
@@ -21,15 +24,44 @@ type dynnode struct {
 	obj map[string]json.RawMessage
 }
 
-func (n *dynnode)Path()(string) {
+func (n *dynnode)LocalPath()(string) {
 	return n.path
 }
 
+func (n *dynnode)buildPath(sep rune, paths []string)(string) {
+	paths = append(paths, n.path)
+	if n.parent != nil {
+		return n.parent.buildPath(sep,paths)
+	}
+	return strings.Join( paths, strconv.QuoteRune(sep) )
+}
+
+func (n *dynnode)checkVersion( v int )(bool) {
+	if n.version == v {
+		if n.parent != nil {
+			return n.parent.checkVersion(v)
+		}
+		return true
+	}
+	return false
+}
+
+func (n *dynnode)inVersion()(bool) {
+	return n.checkVersion( n.version )
+}
+
+func (n *dynnode)FullPath(sep rune)(string) {
+	n.syncVersion()
+	return n.buildPath(sep, make([]string,0,3))
+}
+
 func (n *dynnode)Parent()(DynNode) {
+	n.syncVersion()
 	return n.parent
 }
 
 func (n *dynnode)Root()(DynNode) {
+	n.syncVersion()
 	if n.parent != nil {
 		return n.parent.Root()
 	}
@@ -39,17 +71,105 @@ func (n *dynnode)Root()(DynNode) {
 var null_node dynnode
 
 func (n *dynnode)Data()([]byte) {
+	n.syncVersion()
 	return n.data
+}
+
+func (n *dynnode)incVersion() {
+	n.version++
+	n.syncVersion()
+}
+
+func (n *dynnode)syncChild( child string, child_data []byte )(bool,int) {
+	idx, numerr := strconv.ParseInt(child,10,32)
+	if numerr == nil {
+		var err error
+		var ary []json.RawMessage
+
+		if ary, err = n.Ary(); err != nil {
+			panic(err) // invalid state, if child is a number its parent better be an array
+		}
+
+		buf := new (bytes.Buffer)
+		buf.Grow(len(n.data)-len(ary[idx])+len(child_data))
+
+		ary[idx] = child_data
+
+		buf.WriteString("[")
+		for _, v := range ary {
+			buf.Write(v)
+			buf.WriteString(",")
+		}
+		buf.Truncate(buf.Len()-len(","))
+		buf.WriteString("]")
+
+		n.data = buf.Bytes()
+
+		if n.parent != nil {
+			return n.parent.syncChild(n.path, n.data)
+		}
+
+		return true,n.version
+	} else {
+		var err error
+		var obj map[string]json.RawMessage
+
+		if obj, err = n.Obj(); err != nil {
+			panic(err)
+		}
+
+		buf := new(bytes.Buffer)
+		buf.Grow(len(n.data)-len(obj[child])+len(child_data))
+
+		obj[child] = child_data
+
+		buf.WriteString("{")
+		for k, v := range obj {
+			buf.WriteString("\"")
+			buf.WriteString(k)
+			buf.WriteString("\":")
+			buf.Write(v)
+			buf.WriteString(",")
+		}
+		buf.Truncate(buf.Len()-len(","))
+		buf.WriteString("}")
+
+		n.data = buf.Bytes()
+
+		if n.parent != nil {
+			return n.parent.syncChild(n.path, n.data)
+		}
+		return true, n.version
+	}
+}
+
+func (n *dynnode)syncVersion() {
+	if !n.inVersion() {
+		if ok, ver := n.parent.syncChild( n.path, n.data ); !ok {
+			n.ary = nil
+			n.obj = nil // orphaned
+		} else {
+			n.version = ver
+		}
+	}
 }
 
 func (n *dynnode)SetVal( v interface{} )(err error) {
 	n.data,err = json.Marshal(v)
 	n.ary = nil
 	n.obj = nil
+	n.incVersion()
 	return
 }
 
-func (n *dynnode)Resolve(path string)(DynNode,error) {
+func (n *dynnode)AsNode(path string)(r DynNode) {
+	r, err := n.Node(path)
+	if err != nil { panic(err)	}
+	return
+}
+
+func (n *dynnode)Node(path string)(DynNode,error) {
+	n.syncVersion()
 	if n.IsNull() {
 		return &null_node,nil
 	}
@@ -113,13 +233,14 @@ func (n *dynnode)Resolve(path string)(DynNode,error) {
 			if child.IsNull() {
 				return child,nil
 			}
-			return child.Resolve(path[i:])
+			return child.Node(path[i:])
 		}
 	}
 	return makeNode(path[1:])
 }
 
 func (n *dynnode)Obj()(map[string]json.RawMessage,error) {
+	n.syncVersion()
 	if n.obj != nil { return n.obj, nil }
 
 	if err := json.Unmarshal( n.data, &n.obj ); err != nil {
@@ -129,6 +250,7 @@ func (n *dynnode)Obj()(map[string]json.RawMessage,error) {
 }
 
 func (n *dynnode)Ary()( ret []json.RawMessage, err error) {
+	n.syncVersion()
 	if n.ary != nil { ret = n.ary; return }
 
 	if err = json.Unmarshal( n.data, &n.ary ); err != nil {
@@ -165,6 +287,41 @@ func (n *dynnode)Str()(ret string, err error) {
 
 func (n *dynnode)Bool()(ret bool,err error) {
 	err = json.Unmarshal( n.data, &ret )
+	return
+}
+
+func (n *dynnode)AsU64()(r uint64) {
+	if n.IsNull() { panic("path NULL"); }
+	r, err := n.U64()
+	if err != nil { panic(err) }
+	return
+}
+
+func (n *dynnode)AsI64()(r int64) {
+	if n.IsNull() { panic("path NULL"); }
+	r, err := n.I64()
+	if err != nil { panic(err) }
+	return
+}
+
+func (n *dynnode)AsF64()(r float64) {
+	if n.IsNull() { panic("path NULL"); }
+	r, err := n.F64()
+	if err != nil { panic(err) }
+	return
+}
+
+func (n *dynnode)AsStr()(r string) {
+	if n.IsNull() { panic("path NULL"); }
+	r, err := n.Str()
+	if err != nil { panic(err) }
+	return
+}
+
+func (n *dynnode)AsBool()(r bool) {
+	if n.IsNull() { panic("path NULL"); }
+	r, err := n.Bool()
+	if err != nil { panic(err) }
 	return
 }
 
