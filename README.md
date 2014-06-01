@@ -60,4 +60,31 @@ node.AsNode("/name/of/val").AsI64()
 
 Will panic if path doesn't exist and if the value isn't parsable as I64
 
+
+Mutation is handeled by SetVal, this back propagates in the doc tree, possibly nullifying other nodes if the data set doesn't contain them anymore. This is done with a version number that is incremented to the root. If an orphaned node is accessed it will find its not the right version then possibly orphan itself upon access.
+
+Need proper tests illustrating this.
+
+```
+{
+	"name" : "parent"
+	"children" [ "zero", "one", "two" ]
+}
+```
+
+```
+	child_zero := root.AsNode("/children/zero")
+	child_two := root.AsNode("/children/two")
+
+	root.AsNode("/children").SetVal( []string{ "zero", "one" } )
+
+	if child_two.Root() == child_two {
+		fmt.Printf("I'm an orphan")
+	}
+
+	if child_zero.Root() == root {
+		fmt.Printf("I'm still in the graph whee")
+	}
+```
+
 =======
