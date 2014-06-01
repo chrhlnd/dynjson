@@ -68,7 +68,7 @@ Need proper tests illustrating this.
 ```
 {
 	"name" : "parent"
-	"children" [ "zero", "one", "two" ]
+	"children" : [ "zero", "one", "two" ]
 }
 ```
 
