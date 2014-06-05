@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"bytes"
+//	"log"
 )
 
 func New()(DynNode) {
@@ -28,12 +29,12 @@ func (n *dynnode)LocalPath()(string) {
 	return n.path
 }
 
-func (n *dynnode)buildPath(sep rune, paths []string)(string) {
+func (n *dynnode)buildPath( paths []string)(string) {
 	paths = append(paths, n.path)
 	if n.parent != nil {
-		return n.parent.buildPath(sep,paths)
+		return n.parent.buildPath(paths)
 	}
-	return strings.Join( paths, strconv.QuoteRune(sep) )
+	return strings.Join( paths, "" )
 }
 
 func (n *dynnode)checkVersion( v int )(bool) {
@@ -50,9 +51,9 @@ func (n *dynnode)inVersion()(bool) {
 	return n.checkVersion( n.version )
 }
 
-func (n *dynnode)FullPath(sep rune)(string) {
+func (n *dynnode)FullPath()(string) {
 	n.syncVersion()
-	return n.buildPath(sep, make([]string,0,3))
+	return n.buildPath(make([]string,0,3))
 }
 
 func (n *dynnode)Parent()(DynNode) {
@@ -80,8 +81,8 @@ func (n *dynnode)incVersion() {
 	n.syncVersion()
 }
 
-func (n *dynnode)syncChild( child string, child_data []byte )(bool,int) {
-	idx, numerr := strconv.ParseInt(child,10,32)
+func (n *dynnode)syncChild( child string, child_data []byte )(int) {
+	idx, numerr := strconv.ParseInt(child[1:],10,32)
 	if numerr == nil {
 		var err error
 		var ary []json.RawMessage
@@ -106,10 +107,13 @@ func (n *dynnode)syncChild( child string, child_data []byte )(bool,int) {
 		n.data = buf.Bytes()
 
 		if n.parent != nil {
-			return n.parent.syncChild(n.path, n.data)
+			n.parent.syncChild(n.path, n.data)
+			n.syncVersion()
+		} else {
+			n.incVersion()
 		}
 
-		return true,n.version
+		return n.version
 	} else {
 		var err error
 		var obj map[string]json.RawMessage
@@ -121,7 +125,7 @@ func (n *dynnode)syncChild( child string, child_data []byte )(bool,int) {
 		buf := new(bytes.Buffer)
 		buf.Grow(len(n.data)-len(obj[child])+len(child_data))
 
-		obj[child] = child_data
+		obj[child[1:]] = child_data
 
 		buf.WriteString("{")
 		for k, v := range obj {
@@ -137,20 +141,39 @@ func (n *dynnode)syncChild( child string, child_data []byte )(bool,int) {
 		n.data = buf.Bytes()
 
 		if n.parent != nil {
-			return n.parent.syncChild(n.path, n.data)
+			n.parent.syncChild(n.path, n.data)
+			n.syncVersion()
+		} else {
+			n.incVersion()
 		}
-		return true, n.version
+
+		return n.version
 	}
 }
 
 func (n *dynnode)syncVersion() {
 	if !n.inVersion() {
-		if ok, ver := n.parent.syncChild( n.path, n.data ); !ok {
-			n.ary = nil
-			n.obj = nil // orphaned
-		} else {
-			n.version = ver
+		node, err := n.parent.Node(n.path)
+		if err != nil {
+			panic(err) // mal formed data
 		}
+
+		if node.IsNull() {
+			// orphaned
+			n.parent = nil
+		} else {
+			// mutated
+			n.copyFrom(node)
+		}
+	}
+}
+
+func (n *dynnode)copyFrom( other DynNode ) {
+	switch o := other.(type) {
+	case *dynnode:
+		n = o
+	default:
+		panic("maybe the copy interface should be public")
 	}
 }
 
@@ -158,7 +181,14 @@ func (n *dynnode)SetVal( v interface{} )(err error) {
 	n.data,err = json.Marshal(v)
 	n.ary = nil
 	n.obj = nil
-	n.incVersion()
+	if n.parent != nil {
+		//log.Printf("Syncing parent with new data @ path %v", n.path)
+		n.parent.syncChild(n.path, n.data)
+		n.syncVersion()
+	} else {
+		//log.Printf("Syncing no parent incing version")
+		n.incVersion()
+	}
 	return
 }
 
@@ -200,19 +230,20 @@ func (n *dynnode)Node(path string)(DynNode,error) {
 			return &null_node, err
 		}
 
-		if obj == nil || obj[key] == nil {
+		if obj == nil || obj[key[1:]] == nil {
 			return &null_node,nil
 		}
 
-		return &dynnode{
+		ret := &dynnode{
 			parent : n,
 			path : key,
-			data : n.obj[key],
-		},nil
+			data : n.obj[key[1:]],
+		}
+		return ret, nil
 	}
 
 	makeNode := func ( key string )(*dynnode,error) {
-		idx, numerr := strconv.ParseInt(key,10,32)
+		idx, numerr := strconv.ParseInt(key[1:],10,32)
 		if numerr == nil {
 			return makeArrayNode( key, int(idx) )
 		} else {
@@ -226,7 +257,7 @@ func (n *dynnode)Node(path string)(DynNode,error) {
 		if path[i] == tok {
 			var child *dynnode
 			var err error
-			if child, err = makeNode(path[1:i]); err != nil {
+			if child, err = makeNode(path[0:i]); err != nil {
 				return child, err
 			}
 
@@ -236,7 +267,7 @@ func (n *dynnode)Node(path string)(DynNode,error) {
 			return child.Node(path[i:])
 		}
 	}
-	return makeNode(path[1:])
+	return makeNode(path)
 }
 
 func (n *dynnode)Obj()(map[string]json.RawMessage,error) {

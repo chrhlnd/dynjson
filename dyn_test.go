@@ -262,6 +262,73 @@ func TestMutate(t *testing.T) {
 
 }
 
+func TestCover(t *testing.T) {
+	root := NewFromBytes([]byte(customer))
+
+	if root.AsNode("/age").AsU64() != 33 {
+		t.Error("failed")
+	}
+
+	if root.AsNode("/age").AsI64() != 33 {
+		t.Error("failed")
+	}
+
+	if root.AsNode("/sister/rating").AsF64() != 10.34 {
+		t.Error("failed")
+	}
+
+	if root.AsNode("/name").AsStr() != "fred" {
+		t.Error("failed")
+	}
+
+	if root.AsNode("/fun").AsBool() != false {
+		t.Error("failed")
+	}
+
+	if root.AsNode("/notthere").IsNull() != true {
+		t.Error("failed")
+	}
+
+	ageN := root.AsNode("/age")
+	if ageN.IsNull() {
+		t.Error("failed")
+	}
+
+	if err := ageN.SetVal(34); err != nil {
+		t.Error("failed")
+	}
+
+	if root.AsNode("/age").AsU64() != 34 {
+		t.Error("failed")
+	}
+
+	sisF := root.AsNode("/sister/friends")
+	if sisF.IsNull() {
+		t.Error("failed")
+	}
+	friend2 := sisF.AsNode("/2")
+	if friend2.IsNull() {
+		t.Error("failed")
+	}
+
+	if err := sisF.SetVal( []string { "jim", "bob" } ); err != nil {
+		t.Error(err)
+	}
+
+	if friend2.Root() != friend2 {
+		t.Error("failed orphan")
+	}
+
+	friend1 := sisF.AsNode("/1")
+	if friend1.IsNull() {
+		t.Error("failed")
+	}
+
+	if friend1.AsStr() != "bob" {
+		t.Error("failed mutation")
+	}
+}
+
 func TestNode(t *testing.T) {
 	b := []byte(customer)
 

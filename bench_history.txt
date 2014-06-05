@@ -1,0 +1,16 @@
+---------------------------
+date
+PASS
+BenchmarkNodeChildStr	 1000000	      1703 ns/op
+BenchmarkNodeChildU64	 1000000	      1630 ns/op
+BenchmarkNodeChildBool	 1000000	      1545 ns/op
+BenchmarkNode2ChildF64	  200000	     10647 ns/op
+BenchmarkNode2ChildString	  200000	     10459 ns/op
+BenchmarkNode3ChildArrayStr	  500000	      5106 ns/op
+BenchmarkNode2ChildCached	 1000000	      1076 ns/op
+BenchmarkNode4ChildStr	  100000	     18737 ns/op
+BenchmarkNode4ChildCachedStr	 1000000	      1085 ns/op
+BenchmarkMutate1stChild	  500000	      3903 ns/op
+BenchmarkMutate2rdChild	  100000	     18166 ns/op
+BenchmarkMutate3rdChild	   50000	     33476 ns/op
+ok  	github.com/chrhlnd/dynjson	22.234s

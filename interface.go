@@ -4,7 +4,7 @@ import "encoding/json"
 
 type DynNode interface {
 	LocalPath()(string)
-	FullPath(sep rune)(string)
+	FullPath()(string)
 	Parent()(DynNode)
 	Root()(DynNode)
 
