@@ -4,7 +4,12 @@ dynjson
 Small library to allow for dynamic JSON access in GO
 
 
-API is make a node object with the encoded data. Call Node to get things out. Convert to type with Convert methods.
+Make a node object with the encoded []byte data.
+
+Call Node to get things out.
+
+Convert to type with Convert methods.
+
 ```
 import (
   "github.com/chrhlnd/dynjson"
@@ -30,21 +35,24 @@ func main() {
   }
 }
 ```
-See the dyn_test.go file for more usage. You can SetVal too and it will serialize into bytes for you.
+See the dyn_test.go file for more usage.
 
-When you call resolve it, dynamiclly decodes the path. So if you have some big object buried in the hierarchy you should save out
-the parent node then query off that.
+n.SetVal will serialize into bytes for you, recomposing data up the Parent chain.
+
+When you call Node (AsNode), it dynamiclly decodes the path. So if you have some big object buried in the hierarchy you should save out the parent node then query off that.
 
 congress_books, err = dyn.Node("/library/congress/collection")
 
 The array object is cached in the node, so it doesn't have to reparse that.
 ```
-book_name err = congress_books.Node("/3000/name")
+book_name, err = congress_books.Node("/3000/name")
 book_name, err = congress_books.Node("/3001/name") 
 ```
 Better then digging through all objects every time.
 
-Objects are pathed by their key name, arrays are pathed by their index number.
+Objects are addressed by their key name.
+Arrays are addressed by their index number.
+
 ```
 node.Node("/name/of/keys/in/json/object")
 node.Node("/json/array/500")
@@ -60,10 +68,7 @@ node.AsNode("/name/of/val").AsI64()
 
 Will panic if path doesn't exist and if the value isn't parsable as I64
 
-
 Mutation is handeled by SetVal, this back propagates in the doc tree, possibly nullifying other nodes if the data set doesn't contain them anymore. This is done with a version number that is incremented to the root. If an orphaned node is accessed it will find its not the right version then possibly orphan itself upon access.
-
-Need proper tests illustrating this.
 
 ```
 {
@@ -73,8 +78,8 @@ Need proper tests illustrating this.
 ```
 
 ```
-	child_zero := root.AsNode("/children/zero")
-	child_two := root.AsNode("/children/two")
+	child_zero := root.AsNode("/children/0")
+	child_two := root.AsNode("/children/2")
 
 	root.AsNode("/children").SetVal( []string{ "zero", "one" } )
 
