@@ -46,3 +46,35 @@ BenchmarkMutate1stChild	  500000	      4002 ns/op
 BenchmarkMutate2rdChild	   50000	     36478 ns/op
 BenchmarkMutate3rdChild	   10000	    110985 ns/op
 ok  	github.com/chrhlnd/dynjson	22.198s
+---------------------------
+date
+PASS
+BenchmarkNodeChildStr	 1000000	      1783 ns/op
+BenchmarkNodeChildU64	 1000000	      1684 ns/op
+BenchmarkNodeChildBool	 1000000	      1626 ns/op
+BenchmarkNode2ChildF64	  200000	     11543 ns/op
+BenchmarkNode2ChildString	  200000	     11365 ns/op
+BenchmarkNode3ChildArrayStr	  500000	      5394 ns/op
+BenchmarkNode2ChildCached	 1000000	      1125 ns/op
+BenchmarkNode4ChildStr	  100000	     20021 ns/op
+BenchmarkNode4ChildCachedStr	 1000000	      1122 ns/op
+BenchmarkMutate1stChild	  500000	      4110 ns/op
+BenchmarkMutate2rdChild	   50000	     37401 ns/op
+BenchmarkMutate3rdChild	   10000	    107506 ns/op
+ok  	github.com/chrhlnd/dynjson	22.647s
+---------------------------
+Sat Jun 7 17:27:14 UTC 2014
+PASS
+BenchmarkNodeChildStr	 1000000	      1727 ns/op
+BenchmarkNodeChildU64	 1000000	      1660 ns/op
+BenchmarkNodeChildBool	 1000000	      1634 ns/op
+BenchmarkNode2ChildF64	  200000	     11653 ns/op
+BenchmarkNode2ChildString	  200000	     11279 ns/op
+BenchmarkNode3ChildArrayStr	  500000	      5515 ns/op
+BenchmarkNode2ChildCached	 1000000	      1164 ns/op
+BenchmarkNode4ChildStr	  100000	     20673 ns/op
+BenchmarkNode4ChildCachedStr	 1000000	      1529 ns/op
+BenchmarkMutate1stChild	  500000	      4189 ns/op
+BenchmarkMutate2rdChild	   50000	     41129 ns/op
+BenchmarkMutate3rdChild	   10000	    115441 ns/op
+ok  	github.com/chrhlnd/dynjson	23.459s
