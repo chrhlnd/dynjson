@@ -22,7 +22,8 @@ var customer = `
 	}
 }
 `
-func BenchmarkNodeChildStr(b * testing.B) {
+
+func BenchmarkNodeChildStr(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -38,7 +39,7 @@ func BenchmarkNodeChildStr(b * testing.B) {
 	}
 }
 
-func BenchmarkNodeChildU64(b * testing.B) {
+func BenchmarkNodeChildU64(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -54,7 +55,7 @@ func BenchmarkNodeChildU64(b * testing.B) {
 	}
 }
 
-func BenchmarkNodeChildBool(b * testing.B) {
+func BenchmarkNodeChildBool(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -70,7 +71,7 @@ func BenchmarkNodeChildBool(b * testing.B) {
 	}
 }
 
-func BenchmarkNode2ChildF64(b * testing.B) {
+func BenchmarkNode2ChildF64(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -86,7 +87,7 @@ func BenchmarkNode2ChildF64(b * testing.B) {
 	}
 }
 
-func BenchmarkNode2ChildString(b * testing.B) {
+func BenchmarkNode2ChildString(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -102,7 +103,7 @@ func BenchmarkNode2ChildString(b * testing.B) {
 	}
 }
 
-func BenchmarkNode3ChildArrayStr(b * testing.B) {
+func BenchmarkNode3ChildArrayStr(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -118,7 +119,7 @@ func BenchmarkNode3ChildArrayStr(b * testing.B) {
 	}
 }
 
-func BenchmarkNode2ChildCached(b * testing.B) {
+func BenchmarkNode2ChildCached(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -135,7 +136,7 @@ func BenchmarkNode2ChildCached(b * testing.B) {
 	}
 }
 
-func BenchmarkNode4ChildStr(b * testing.B) {
+func BenchmarkNode4ChildStr(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -151,7 +152,7 @@ func BenchmarkNode4ChildStr(b * testing.B) {
 	}
 }
 
-func BenchmarkNode4ChildCachedStr(b * testing.B) {
+func BenchmarkNode4ChildCachedStr(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
 	b.ResetTimer()
@@ -173,7 +174,7 @@ func BenchmarkNode4ChildCachedStr(b * testing.B) {
 func BenchmarkMutate1stChild(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 	for i := 0; i < b.N; i++ {
-		n := root.AsNode("/name");
+		n := root.AsNode("/name")
 		n.SetVal(68.33)
 	}
 }
@@ -181,7 +182,7 @@ func BenchmarkMutate1stChild(b *testing.B) {
 func BenchmarkMutate2rdChild(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 	for i := 0; i < b.N; i++ {
-		n := root.AsNode("/sister/name");
+		n := root.AsNode("/sister/name")
 		n.SetVal(300)
 	}
 }
@@ -189,9 +190,8 @@ func BenchmarkMutate2rdChild(b *testing.B) {
 func BenchmarkMutate3rdChild(b *testing.B) {
 	root := NewFromBytes([]byte(customer))
 
-
 	for i := 0; i < b.N; i++ {
-		n := root.AsNode("/sister/friends/0");
+		n := root.AsNode("/sister/friends/0")
 		n.SetVal(true)
 	}
 }
@@ -203,21 +203,20 @@ func TestMutate(t *testing.T) {
 	var node1 DynNode
 	var err error
 
-	errIf := func (err error) {
+	errIf := func(err error) {
 		if err != nil {
 			t.Error(err)
 			panic("blah")
 		}
 	}
 
-	node, err = root.Node("/name");
-	errIf(err);
+	node, err = root.Node("/name")
+	errIf(err)
 
 	node.SetVal("Sup")
 
-
-	node1, err = root.Node("/name");
-	errIf(err);
+	node1, err = root.Node("/name")
+	errIf(err)
 
 	if node1.AsStr() != node.AsStr() {
 		t.Errorf("Mutation failed expected %v, got %v\n", node.AsStr(), node1.AsStr())
@@ -256,7 +255,6 @@ func TestMutate(t *testing.T) {
 		t.Error("F64 fail")
 		return
 	}
-
 
 	t.Logf("Data was %v\n", string(root.Data()))
 
@@ -311,7 +309,7 @@ func TestCover(t *testing.T) {
 		t.Error("failed")
 	}
 
-	if err := sisF.SetVal( []string { "jim", "bob" } ); err != nil {
+	if err := sisF.SetVal([]string{"jim", "bob"}); err != nil {
 		t.Error(err)
 	}
 
@@ -345,7 +343,7 @@ func TestNode(t *testing.T) {
 		}
 
 	} else {
-		t.Errorf("Node failed to find /name expected DynNode value = 'fred' err was %v",err);
+		t.Errorf("Node failed to find /name expected DynNode value = 'fred' err was %v", err)
 	}
 
 	if node, err = root.Node("/friends"); err == nil && !node.IsNull() {
@@ -359,7 +357,7 @@ func TestNode(t *testing.T) {
 		}
 
 	} else {
-		t.Errorf("Node failed to find /friends expected DynNode value = [ '', '', '' ] err was %v",err);
+		t.Errorf("Node failed to find /friends expected DynNode value = [ '', '', '' ] err was %v", err)
 	}
 
 	if node, err = root.Node("/friends/1"); err == nil && !node.IsNull() {
@@ -370,12 +368,12 @@ func TestNode(t *testing.T) {
 		}
 
 	} else {
-		t.Errorf("Node failed to find /friends/1 expected DynNode value = 'douge' err was %v",err);
+		t.Errorf("Node failed to find /friends/1 expected DynNode value = 'douge' err was %v", err)
 	}
 
 	if node, err = root.Node("/sister/rating"); err == nil && !node.IsNull() {
 		if f64, err := node.F64(); err != nil || f64 != 10.34 {
-			t.Errorf("Expected float got error %v",err)
+			t.Errorf("Expected float got error %v", err)
 		} else {
 			t.Logf("Found rating %v", f64)
 		}
@@ -385,7 +383,7 @@ func TestNode(t *testing.T) {
 
 	if node, err = root.Node("/sister/fun"); err == nil && !node.IsNull() {
 		if fun, err := node.Bool(); err != nil || !fun {
-			t.Errorf("Expected true got %v error %v",fun,err)
+			t.Errorf("Expected true got %v error %v", fun, err)
 		}
 	} else {
 		t.Errorf("Failed err %v", err)
@@ -393,20 +391,20 @@ func TestNode(t *testing.T) {
 
 	type Friend struct {
 		Name string
-		Age int
+		Age  int
 		Rank float32
 	}
 
 	type MoreData struct {
-		Name string
-		Ranks []int
+		Name    string
+		Ranks   []int
 		Friends []Friend
 	}
 
 	d := MoreData{
-		Name: "hello",
-		Ranks: []int{ 0, 32, 6, 6, },
-		Friends: []Friend{ {"dude",6,33.34},{"mecka",33,133.88},{"beeber",338,13.8}},
+		Name:    "hello",
+		Ranks:   []int{0, 32, 6, 6},
+		Friends: []Friend{{"dude", 6, 33.34}, {"mecka", 33, 133.88}, {"beeber", 338, 13.8}},
 	}
 	root = New()
 	root.SetVal(d)
@@ -421,10 +419,7 @@ func TestNode(t *testing.T) {
 	}
 
 	if f64 != 33.34 {
-		t.Fatalf("Wrong val got %v",f64)
+		t.Fatalf("Wrong val got %v", f64)
 	}
 
-
-
 }
-
