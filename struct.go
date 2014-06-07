@@ -171,7 +171,7 @@ func (n *dynnode)syncVersion() {
 func (n *dynnode)copyFrom( other DynNode ) {
 	switch o := other.(type) {
 	case *dynnode:
-		n = o
+		*n = *o
 	default:
 		panic("maybe the copy interface should be public")
 	}
@@ -198,57 +198,57 @@ func (n *dynnode)AsNode(path string)(r DynNode) {
 	return
 }
 
+func makeArrayNode(n *dynnode, key string, idx int)(*dynnode,error) {
+	var ary []json.RawMessage
+	var err error
+
+	if ary, err = n.Ary(); err != nil {
+		return &null_node, err
+	}
+
+	if idx < 0 || ary == nil || idx >= len(ary) {
+		return &null_node,nil
+	}
+
+	return &dynnode{
+		parent : n,
+		path : key,
+		data : ary[idx],
+	},nil
+}
+
+func makeObjNode(n *dynnode,key string)(*dynnode,error) {
+	var obj map[string]json.RawMessage
+	var err error
+	if obj, err = n.Obj(); err != nil {
+		return &null_node, err
+	}
+
+	if obj == nil || obj[key[1:]] == nil {
+		return &null_node,nil
+	}
+
+	ret := &dynnode{
+		parent : n,
+		path : key,
+		data : n.obj[key[1:]],
+	}
+	return ret, nil
+}
+
+func makeNode(n *dynnode,key string)(*dynnode,error) {
+	idx, numerr := strconv.ParseInt(key[1:],10,32)
+	if numerr == nil {
+		return makeArrayNode( n, key, int(idx) )
+	} else {
+		return makeObjNode( n, key )
+	}
+}
+
 func (n *dynnode)Node(path string)(DynNode,error) {
 	n.syncVersion()
 	if n.IsNull() {
 		return &null_node,nil
-	}
-
-	makeArrayNode := func ( key string, idx int )(*dynnode,error) {
-		var ary []json.RawMessage
-		var err error
-
-		if ary, err = n.Ary(); err != nil {
-			return &null_node, err
-		}
-
-		if idx < 0 || ary == nil || idx >= len(ary) {
-			return &null_node,nil
-		}
-
-		return &dynnode{
-			parent : n,
-			path : key,
-			data : ary[idx],
-		},nil
-	}
-
-	makeObjNode := func ( key string )(*dynnode,error) {
-		var obj map[string]json.RawMessage
-		var err error
-		if obj, err = n.Obj(); err != nil {
-			return &null_node, err
-		}
-
-		if obj == nil || obj[key[1:]] == nil {
-			return &null_node,nil
-		}
-
-		ret := &dynnode{
-			parent : n,
-			path : key,
-			data : n.obj[key[1:]],
-		}
-		return ret, nil
-	}
-
-	makeNode := func ( key string )(*dynnode,error) {
-		idx, numerr := strconv.ParseInt(key[1:],10,32)
-		if numerr == nil {
-			return makeArrayNode( key, int(idx) )
-		} else {
-			return makeObjNode( key )
-		}
 	}
 
 	tok := path[0]
@@ -257,7 +257,7 @@ func (n *dynnode)Node(path string)(DynNode,error) {
 		if path[i] == tok {
 			var child *dynnode
 			var err error
-			if child, err = makeNode(path[0:i]); err != nil {
+			if child, err = makeNode(n,path[0:i]); err != nil {
 				return child, err
 			}
 
@@ -267,7 +267,7 @@ func (n *dynnode)Node(path string)(DynNode,error) {
 			return child.Node(path[i:])
 		}
 	}
-	return makeNode(path)
+	return makeNode(n,path)
 }
 
 func (n *dynnode)Obj()(map[string]json.RawMessage,error) {
