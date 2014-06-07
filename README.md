@@ -41,7 +41,9 @@ n.SetVal will serialize into bytes for you, recomposing data up the Parent chain
 
 When you call Node (AsNode), it dynamiclly decodes the path. So if you have some big object buried in the hierarchy you should save out the parent node then query off that.
 
+```
 congress_books, err = dyn.Node("/library/congress/collection")
+```
 
 The array object is cached in the node, so it doesn't have to reparse that.
 ```
@@ -78,18 +80,18 @@ Mutation is handeled by SetVal, this back propagates in the doc tree, possibly n
 ```
 
 ```
-	child_zero := root.AsNode("/children/0")
-	child_two := root.AsNode("/children/2")
+child_zero := root.AsNode("/children/0")
+child_two := root.AsNode("/children/2")
 
-	root.AsNode("/children").SetVal( []string{ "zero", "one" } )
+root.AsNode("/children").SetVal( []string{ "zero", "one" } )
 
-	if child_two.Root() == child_two {
-		fmt.Printf("I'm an orphan")
-	}
+if child_two.Root() == child_two {
+	fmt.Printf("I'm an orphan")
+}
 
-	if child_zero.Root() == root {
-		fmt.Printf("I'm still in the graph whee")
-	}
+if child_zero.Root() == root {
+	fmt.Printf("I'm still in the graph whee")
+}
 ```
 
 =======
