@@ -299,6 +299,16 @@ func (n *dynnode) Ary() (ret []json.RawMessage, err error) {
 	return
 }
 
+func (n *dynnode) Len() int {
+	if ary, err := n.Ary(); err == nil {
+		return len(ary)
+	}
+	if obj, err := n.Obj(); err == nil {
+		return len(obj)
+	}
+	return 0
+}
+
 func (n *dynnode) IsNull() bool {
 	return n == &null_node
 }
@@ -326,6 +336,10 @@ func (n *dynnode) Str() (ret string, err error) {
 func (n *dynnode) Bool() (ret bool, err error) {
 	err = json.Unmarshal(n.data, &ret)
 	return
+}
+
+func (n *dynnode) Struct(out interface{}) error {
+	return json.Unmarshal(n.data, out)
 }
 
 func (n *dynnode) AsU64() (r uint64) {

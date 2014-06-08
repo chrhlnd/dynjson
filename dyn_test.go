@@ -18,6 +18,7 @@ var customer = `
 		"name" : "joey"
 		,"rating" : 10.34
 		,"fun" : true
+		,"sane_friends" : [ "hi", "ho", "dairo" ]
 		,"friends" : [ "joe", "dag", { "name" : "mum" } ]
 	}
 }
@@ -300,6 +301,59 @@ func TestCover(t *testing.T) {
 		t.Error("failed")
 	}
 
+	type Sister struct {
+		Name         string
+		Rating       float32
+		Fun          bool
+		Sane_Friends []string
+		Friends      []interface{}
+	}
+
+	var sis Sister
+	root.AsNode("/sister").Struct(&sis)
+
+	if sis.Name != "joey" {
+		t.Errorf("failed Sis expected 'joey' found %v", sis.Name)
+	}
+	if sis.Rating != 10.34 {
+		t.Error("failed Sis")
+	}
+	if !sis.Fun {
+		t.Error("failed Sis")
+	}
+	if len(sis.Sane_Friends) != 3 {
+		t.Error("failed Sis Sane Friend Array")
+	}
+	for _, v := range sis.Sane_Friends {
+		if v == "" {
+			t.Error("failed Sis sane friend Value [", v, "]")
+			break
+		}
+	}
+
+	var sis_f_ary []string
+
+	if err := root.AsNode("/sister/sane_friends").Struct(&sis_f_ary); err != nil || sis_f_ary == nil || len(sis_f_ary) == 0 {
+		t.Errorf("Failed array deserialize %v", err)
+	}
+
+	t.Logf("Array deserialized to len %v", len(sis_f_ary))
+
+	if root.AsNode("/sister/sane_friends").Len() != 3 {
+		t.Errorf("Failed len got %v expected 3", root.AsNode("/sister/friends").Len())
+	}
+
+	for i, v := range sis_f_ary {
+		if v != sis.Sane_Friends[i] {
+			t.Errorf("Failed sane friend check expected %v got %v", v, sis.Sane_Friends[i])
+		}
+	}
+
+	if 5 != root.Len() {
+		t.Errorf("Object length test failed expected 5 got %v", root.Len())
+	}
+
+	// mutation
 	sisF := root.AsNode("/sister/friends")
 	if sisF.IsNull() {
 		t.Error("failed")
